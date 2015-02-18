@@ -8,80 +8,62 @@
 
 #import "MasterViewController.h"
 #import "DetailViewController.h"
+#import "UIImageView+WebCache.h"
 
 @interface MasterViewController ()
-
-@property NSMutableArray *objects;
+@property NSArray *objects;
 @end
 
 @implementation MasterViewController
 
-- (void)awakeFromNib {
-  [super awakeFromNib];
-}
-
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
   [super viewDidLoad];
-  // Do any additional setup after loading the view, typically from a nib.
-  self.navigationItem.leftBarButtonItem = self.editButtonItem;
 
-  UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
-  self.navigationItem.rightBarButtonItem = addButton;
+  self.objects = @[@"https://dl.dropbox.com/s/wfv0j9tece0y03j/apple.jpg"];
 }
 
-- (void)didReceiveMemoryWarning {
-  [super didReceiveMemoryWarning];
-  // Dispose of any resources that can be recreated.
+- (void)viewWillAppear:(BOOL)animated
+{
+  [super viewWillAppear:animated];
+  
+  [self.tableView reloadData];
 }
 
-- (void)insertNewObject:(id)sender {
-  if (!self.objects) {
-      self.objects = [[NSMutableArray alloc] init];
-  }
-  [self.objects insertObject:[NSDate date] atIndex:0];
-  NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-  [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-}
-
-#pragma mark - Segues
-
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-  if ([[segue identifier] isEqualToString:@"showDetail"]) {
-      NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
-      NSDate *object = self.objects[indexPath.row];
-      [[segue destinationViewController] setDetailItem:object];
-  }
-}
 
 #pragma mark - Table View
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-  return 1;
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  return self.objects.count;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  return self.objects.count;
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  return 100;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
   UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
-
-  NSDate *object = self.objects[indexPath.row];
-  cell.textLabel.text = [object description];
+  
+  NSString *object = self.objects[indexPath.row];
+  cell.textLabel.text = @"bla";
+  [cell.imageView sd_setImageWithURL:[NSURL URLWithString:object]
+                    placeholderImage:nil
+                             options:SDWebImageRefreshCached completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
+                               NSLog(@"Image error: %@, cacheType: %@", error, [self cacheTypeStringWithCacheType:cacheType]);
+                               [cell setNeedsLayout];
+                               [cell layoutIfNeeded];
+                             }];
   return cell;
 }
 
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-  // Return NO if you do not want the specified item to be editable.
-  return YES;
-}
-
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-  if (editingStyle == UITableViewCellEditingStyleDelete) {
-      [self.objects removeObjectAtIndex:indexPath.row];
-      [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-  } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-      // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
+- (NSString *)cacheTypeStringWithCacheType:(SDImageCacheType)cacheType
+{
+  switch (cacheType) {
+    case SDImageCacheTypeDisk: return @"Disk";
+    case SDImageCacheTypeMemory: return @"Memory";
+    case SDImageCacheTypeNone: return @"None";
   }
 }
 

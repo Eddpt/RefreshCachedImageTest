@@ -6,10 +6,9 @@
 //  Copyright (c) 2015 xpto. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+@import UIKit;
 
 @interface MasterViewController : UITableViewController
-
 
 @end
 
